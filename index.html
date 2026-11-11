@@ -50,7 +50,22 @@
 
     header h1 { margin: 0 0 4px; font-size: 1.75rem; font-weight: 800; }
     header p  { margin: 0; color: var(--teks-redup); }
-
+    
+<!-- FORM TAMBAH DATA -->
+<section style="margin-bottom: 24px; padding: 20px; background: var(--kartu); border: 1px solid var(--garis); border-radius: 14px;">
+  <h2 style="margin-top: 0; font-size: 1.2rem;">Tambah Data Siswa</h2>
+  <form id="formTambah" style="display: flex; flex-wrap: wrap; gap: 10px;">
+    <input type="text" id="inNis" placeholder="NIS *" required style="padding: 10px; border-radius: 8px; border: 1px solid var(--garis); background: var(--bg); color: var(--teks); flex: 1 1 100px;">
+    <input type="text" id="inNama" placeholder="Nama Lengkap *" required style="padding: 10px; border-radius: 8px; border: 1px solid var(--garis); background: var(--bg); color: var(--teks); flex: 2 1 150px;">
+    <input type="text" id="inKelas" placeholder="Kelas (Cth: 11 TKJ 1)" style="padding: 10px; border-radius: 8px; border: 1px solid var(--garis); background: var(--bg); color: var(--teks); flex: 1 1 120px;">
+    
+    <button type="submit" id="btnSimpan" style="padding: 10px 20px; border-radius: 8px; border: none; background: var(--aksen); color: white; font-weight: bold; cursor: pointer; flex: 1 1 100%;">
+      Simpan Data
+    </button>
+  </form>
+  <p id="pesanForm" style="margin: 10px 0 0; font-size: 0.9rem;"></p>
+</section>
+<!-- SELESAI FORM TAMBAH DATA -->
     /* Kolom pencarian dan filter */
     .kontrol { display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0 8px; }
     .kontrol input, .kontrol select {
@@ -338,7 +353,46 @@
     // Setiap kali pengunjung mengetik atau mengganti kelas, kartu diperbarui
     elCari.addEventListener("input", tampilkanSiswa);
     elKelas.addEventListener("change", tampilkanSiswa);
+// ---------- LOGIKA TAMBAH DATA ----------
+const formTambah = document.getElementById("formTambah");
+const btnSimpan = document.getElementById("btnSimpan");
+const pesanForm = document.getElementById("pesanForm");
 
+formTambah.addEventListener("submit", async (e) => {
+  e.preventDefault(); // Tahan agar halaman tidak reload
+  btnSimpan.disabled = true;
+  btnSimpan.textContent = "Menyimpan...";
+  pesanForm.textContent = "";
+
+  // Ambil data dari input
+  const dataBaru = {
+    nis: document.getElementById("inNis").value.trim(),
+    nama: document.getElementById("inNama").value.trim(),
+    kelas: document.getElementById("inKelas").value.trim() || null
+  };
+
+  // Kirim ke Supabase
+  const { data, error } = await db.from("siswa").insert([dataBaru]);
+
+  if (error) {
+    // Jika NIS kembar (error code 23505)
+    if (error.code === '23505') {
+      pesanForm.style.color = '#b42318';
+      pesanForm.textContent = "Gagal: NIS tersebut sudah terdaftar!";
+    } else {
+      pesanForm.style.color = '#b42318';
+      pesanForm.textContent = "Gagal: " + error.message;
+    }
+  } else {
+    pesanForm.style.color = 'green';
+    pesanForm.textContent = "Data berhasil ditambahkan!";
+    formTambah.reset(); // Kosongkan form
+    muatData(); // Refresh tampilan kartu di bawahnya
+  }
+
+  btnSimpan.disabled = false;
+  btnSimpan.textContent = "Simpan Data";
+});
     muatData();
   </script>
 </body>
