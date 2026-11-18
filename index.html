@@ -339,6 +339,7 @@ header p { margin: 0; color: var(--teks-redup); }
 <script>
 // PENGATURAN SUPABASE
 const SUPABASE_URL = "https://jcgjfsvggogookzixizk.supabase.co";
+// Catatan: Pastikan key di bawah sesuai dengan anon key dari dashboard Supabase Anda
 const SUPABASE_ANON_KEY = ".sb_publishable_yw3wqE1uKd7qGSAuBXRkxQ_3EAdmzaT";
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -363,7 +364,46 @@ const elFilterMapel = document.getElementById("filterMapel");
 const modalGuru = document.getElementById("modalGuru");
 const formGuru = document.getElementById("formGuru");
 
-// Navigasi Tab
+// ==================== FUNGSI PEMBANTU (HELPERS) ====================
+function el(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+}
+
+function buatPesanElemen(teks, isError = false) {
+    return el("p", isError ? "pesan galat" : "pesan", teks);
+}
+
+function inisial(nama) {
+    if (!nama) return "?";
+    return nama.trim().split(/\s+/).slice(0, 2).map(n => n[0]).join("").toUpperCase();
+}
+
+function warnaWarna(str) {
+    if (!str) return 220;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return Math.abs(hash) % 360;
+}
+
+function formatTanggal(tglString) {
+    if (!tglString) return "-";
+    const opsi = { day: "numeric", month: "long", year: "numeric" };
+    return new Date(tglString).toLocaleDateString("id-ID", opsi);
+}
+
+function tambahBarisRincian(dl, label, nilai) {
+    const div = document.createElement("div");
+    div.appendChild(el("dt", "", label));
+    div.appendChild(el("dd", "", nilai));
+    dl.appendChild(div);
+}
+
+// ==================== NAVIGASI TAB ====================
 function pindahTab(target) {
     tabAktif = target;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('aktif'));
@@ -385,6 +425,19 @@ function pindahTab(target) {
 }
 
 // ==================== CRUD SISWA ====================
+function isiPilihanKelas() {
+    const nilaiSebelumnya = elFilterKelas.value;
+    const daftarKelas = [...new Set(semuaSiswa.map(s => s.kelas).filter(Boolean))].sort();
+    elFilterKelas.innerHTML = '<option value="">Semua kelas</option>';
+    daftarKelas.forEach(k => {
+        const opt = document.createElement("option");
+        opt.value = k;
+        opt.textContent = k;
+        elFilterKelas.appendChild(opt);
+    });
+    elFilterKelas.value = nilaiSebelumnya;
+}
+
 async function muatDataSiswa() {
     elDaftarSiswa.replaceChildren(buatPesanElemen("Memuat data siswa..."));
     
@@ -399,7 +452,7 @@ async function muatDataSiswa() {
         return;
     }
 
-    semuaSiswa = data;
+    semuaSiswa = data || [];
     isiPilihanKelas();
     tampilkanSiswa();
 }
@@ -531,6 +584,19 @@ function tutupModalSiswa() { modalSiswa.classList.remove("aktif"); }
 
 
 // ==================== CRUD GURU ====================
+function isiPilihanMapel() {
+    const nilaiSebelumnya = elFilterMapel.value;
+    const daftarMapel = [...new Set(semuaGuru.map(g => g.mapel).filter(Boolean))].sort();
+    elFilterMapel.innerHTML = '<option value="">Semua Mapel</option>';
+    daftarMapel.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        elFilterMapel.appendChild(opt);
+    });
+    elFilterMapel.value = nilaiSebelumnya;
+}
+
 async function muatDataGuru() {
     elDaftarGuru.replaceChildren(buatPesanElemen("Memuat data guru..."));
     
@@ -545,7 +611,7 @@ async function muatDataGuru() {
         return;
     }
 
-    semuaGuru = data;
+    semuaGuru = data || [];
     isiPilihanMapel();
     tampilkanGuru();
 }
@@ -570,4 +636,7 @@ function tampilkanGuru() {
         return;
     }
 
-    hasil.forEach((g) => elDaftarGuru.appendChild(bua
+    hasil.forEach((g) => elDaftarGuru.appendChild(buatKartuGuru(g)));
+}
+
+function buatKart
